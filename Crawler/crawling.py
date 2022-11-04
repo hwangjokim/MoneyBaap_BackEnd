@@ -55,9 +55,15 @@ def load_saving_number(target):
 def crawl_without_naver_order(driver, i):
     menus = []
     try:
+        driver.get("https://m.place.naver.com/restaurant/%s/home" % i)
+        time.sleep(0.7)
         info = {"link": "https://map.naver.com/v5/entry/place/" + i,
                 "name": driver.find_element(By.CLASS_NAME, "Fc1rA").text,
-                "star": driver.find_element(By.TAG_NAME, "em").text}
+                "star": driver.find_element(By.TAG_NAME, "em").text,
+                "locate": driver.find_element(By.CLASS_NAME, "IH7VW").text
+                }
+        driver.get("https://m.place.naver.com/restaurant/%s/menu/list" % i)
+        time.sleep(0.8)
     except:
         return None
     driver.implicitly_wait(0)
@@ -82,7 +88,9 @@ def crawl_with_naver_order(driver, i):
 
     info = {"link": "https://map.naver.com/v5/entry/place/" + i,
             "name": driver.find_element(By.CLASS_NAME, "Fc1rA").text,
-            "star": driver.find_element(By.TAG_NAME, "em").text}
+            "star": driver.find_element(By.TAG_NAME, "em").text,
+            "locate": driver.find_element(By.CLASS_NAME,"IH7VW").text
+            }
     driver.get("https://m.place.naver.com/restaurant/%s/menu/list" % i)
     time.sleep(0.8)
     # Todo : 이미지 리스트 구분해서 menus에 append 한 뒤에 info return
