@@ -31,7 +31,7 @@ var contactSchema = mongoose.Schema( {
     locate:{type:String, required:true, unique:true},
     menus:{type:Array, required:true, unique:true}
 
-});//유후
+});//유후~
 var Contact = mongoose.model('food', contactSchema);
 
 app.get('/contacts', (req, res) => {
