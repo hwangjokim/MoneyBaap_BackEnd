@@ -1,10 +1,11 @@
 var express = require('express')
 var mongoose = require('mongoose');
+var cors = require("cors");
 var app = express();
 var port = 5921;
 
 var port = app.listen(5921);
-
+app.use(cors());
 // var link;
 // const fs = require('fs')
 // fs.readFile('/RestAPI/mongoPW.txt','utf8', (err, d) => {
@@ -15,7 +16,7 @@ var port = app.listen(5921);
 //     return link = d;
 // })
 // mongoose.connect(link);
-mongoose.connect('');
+mongoose.connect('mongodb+srv://jongwoo:j9735567@jcluster.z310zkz.mongodb.net/jdb');
 var db = mongoose.connection;
 db.once('open', function(err,a) {
     console.log('DB connected');
