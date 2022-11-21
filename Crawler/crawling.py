@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 def get_picture_link(el):
     try:
         src = el.find_element(By.CLASS_NAME, "K0PDV").get_attribute("style")
-        return parse.unquote(src[src.find("src=") + 4:-3])
+        return parse.unquote("https://search.pstatic.net/common/?autoRotate=true&quality=95&type=f320_320&"+src[src.find("src="):-3])
     except:
         return None
 
@@ -54,12 +54,16 @@ def load_saving_number(target):
 
 def crawl_without_naver_order(driver, i):
     menus = []
+    menu_names = []
+
     try:
-        driver.get("https://m.place.naver.com/restaurant/%s/home" % i)
-        time.sleep(0.7)
+        if float(driver.find_element(By.TAG_NAME,"em").text) > 5 :
+            stars=None
+        else:
+            stars=driver.find_element(By.TAG_NAME,"em").text
         info = {"link": "https://map.naver.com/v5/entry/place/" + i,
                 "name": driver.find_element(By.CLASS_NAME, "Fc1rA").text,
-                "star": driver.find_element(By.TAG_NAME, "em").text,
+                "star": stars,
                 "locate": driver.find_element(By.CLASS_NAME, "IH7VW").text
                 }
         driver.get("https://m.place.naver.com/restaurant/%s/menu/list" % i)
@@ -71,24 +75,29 @@ def crawl_without_naver_order(driver, i):
         for price, names in zip(driver.find_elements(By.CLASS_NAME, "SSaNE"),
                                 driver.find_elements(By.CLASS_NAME, "Sqg65")):
             menus.append([names.text, price.text, None])
+            menu_names.append(names.text)
     else:
         for price, names, picture in zip(driver.find_elements(By.CLASS_NAME, "SSaNE"),
                                          driver.find_elements(By.CLASS_NAME, "Sqg65"),
                                          driver.find_elements(By.CLASS_NAME, "r8zp9")):
             menus.append([names.text, price.text, get_picture_link(picture)])
+            menu_names.append(names.text)
     info["menus"] = menus
+    info["menu_names"] = menu_names
     return info
 
 
 def crawl_with_naver_order(driver, i):
     menus = []
-    driver.get("https://m.place.naver.com/restaurant/%s/home" % i)
-    time.sleep(0.7)
-    driver.implicitly_wait(1)
+    menu_names=[]
 
+    if float(driver.find_element(By.TAG_NAME, "em").text) > 5:
+        stars = None
+    else:
+        stars = driver.find_element(By.TAG_NAME, "em").text
     info = {"link": "https://map.naver.com/v5/entry/place/" + i,
             "name": driver.find_element(By.CLASS_NAME, "Fc1rA").text,
-            "star": driver.find_element(By.TAG_NAME, "em").text,
+            "star": stars,
             "locate": driver.find_element(By.CLASS_NAME,"IH7VW").text
             }
     driver.get("https://m.place.naver.com/restaurant/%s/menu/list" % i)
@@ -101,19 +110,21 @@ def crawl_with_naver_order(driver, i):
             price = menu.find_element(By.CLASS_NAME, "price").text
             img_src = get_picture_link_with_naver(menu)
             menus.append([name, price, img_src])
+            menu_names.append(name)
         else:
             name = menu.find_element(By.CLASS_NAME, "tit").text
             price = menu.find_element(By.CLASS_NAME, "price").text
             menus.append([name, price, None])
+            menu_names.append(name)
 
     info["menus"] = menus
+    info["menu_names"] = menu_names
     return info
 
 
 def get_picture_link_with_naver(pic):
     try:
         img_src = pic.find_element(By.CLASS_NAME, "img").get_attribute("src")
-        img_src = img_src[:img_src.find("?")]
         return img_src
     except:
         return None
@@ -136,11 +147,11 @@ def do_crawl(target):
     for i in nums[:select]:
         count += 1
         print("now : %d" % count)
-        next_url = "https://m.place.naver.com/restaurant/%s/menu/list" % i
+        next_url = "https://m.place.naver.com/restaurant/%s/home" % i
         driver.get(next_url)
-        time.sleep(0.5)
+        time.sleep(0.7)
         driver.implicitly_wait(0)
-        if len(driver.find_elements(By.CLASS_NAME, "naver_order_contents")) == 0:
+        if len(driver.find_elements(By.CLASS_NAME, "yJySz")) == 0 or driver.find_element(By.CLASS_NAME, "yJySz").text!="주문":
             driver.implicitly_wait(1)
             res = crawl_without_naver_order(driver, i)
             if res is not None:
