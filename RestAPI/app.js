@@ -16,7 +16,7 @@ app.use(cors());
 //     return link = d;
 // })
 // mongoose.connect(link);
-mongoose.connect('mongodb+srv://jongwoo:j9735567@jcluster.z310zkz.mongodb.net/jdb');
+mongoose.connect('');
 var db = mongoose.connection;
 db.once('open', function(err,a) {
     console.log('DB connected');
@@ -34,11 +34,26 @@ var contactSchema = mongoose.Schema( {
 
 });//유후~
 var Contact = mongoose.model('food', contactSchema);
-
+var Natl = mongoose.model('seoulnatl',contactSchema);
+var Cau = mongoose.model('cau',contactSchema);
 app.get('/contacts', (req, res) => {
     Contact.find({}, function(err, foods) {
         if(err) return res.json(err);
         res.json({food:foods});
+    });
+});
+
+app.get('/seouls', (req, res) => {
+    Natl.find({}, function(err, seoulnatls) {
+        if(err) return res.json(err);
+        res.json({SeoulNatl:seoulnatls});
+    });
+});
+
+app.get('/caus', (req, res) => {
+    Cau.find({}, function(err, caus) {
+        if(err) return res.json(err);
+        res.json({cau:caus});
     });
 });
 
