@@ -1,62 +1,48 @@
-var express = require('express')
-var mongoose = require('mongoose');
+const express = require("express");
+const mysql = require("mysql2/promise");
+const dotenv = require('dotenv');
+dotenv.config();
+const pool = mysql.createPool({
+  user: process.env.DATABASE_USERNAME,
+  host: "3.39.149.172",
+  database: process.env.DATABASE_NAME,
+  password: process.env.DATABASE_PASSWORD,
+  port: 3306,
+  connectionLimit: 100,
+});
+
+const app = express();
+const port = 5921;
+
 var cors = require("cors");
-var app = express();
-var port = 5921;
-
-var port = app.listen(5921);
 app.use(cors());
-// var link;
-// const fs = require('fs')
-// fs.readFile('/RestAPI/mongoPW.txt','utf8', (err, d) => {
-//     if (err) {
-//         console.errror(err)
-//         return
-//     }
-//     return link = d;
-// })
-// mongoose.connect(link);
-mongoose.connect('');
-var db = mongoose.connection;
-db.once('open', function(err,a) {
-    console.log('DB connected');
-});
-db.on('error', function(err) {
-    console.log('DB ERROR : ', err);
+
+app.get("/places", async (req, res) => {
+  const conn = await pool.getConnection();
+  let [results] = await conn.query(
+    "SELECT name, link, addr, star FROM place WHERE 1"
+  );
+  await conn.release();
+  res.json({ places: results });
 });
 
-var contactSchema = mongoose.Schema( {
-    link:{type:String, required:true, unique:true},
-    name:{type:String, required:true, unique:true},
-    star:{type:String, required:true, unique:false},
-    locate:{type:String, required:true, unique:true},
-    menus:{type:Array, required:true, unique:true}
-
-});//유후~
-var Contact = mongoose.model('food', contactSchema);
-var Natl = mongoose.model('seoulnatl',contactSchema);
-var Cau = mongoose.model('cau',contactSchema);
-app.get('/contacts', (req, res) => {
-    Contact.find({}, function(err, foods) {
-        if(err) return res.json(err);
-        res.json({food:foods});
-    });
-});
-
-app.get('/seouls', (req, res) => {
-    Natl.find({}, function(err, seoulnatls) {
-        if(err) return res.json(err);
-        res.json({SeoulNatl:seoulnatls});
-    });
-});
-
-app.get('/caus', (req, res) => {
-    Cau.find({}, function(err, caus) {
-        if(err) return res.json(err);
-        res.json({cau:caus});
-    });
+app.get("/lowPrice", async (req, res) => {
+  const { search } = req.query;
+  console.log("search ! => " + search);
+  const conn = await pool.getConnection();
+  let [results] = await conn.query(
+    "SELECT p.name As placeName, p.link, p.addr, p.star, m.name, m.price, m.imgUrl \
+                                        FROM place p \
+                                        JOIN menu m \
+                                            ON p.idx = m.placeIdx \
+                                        WHERE m.name LIKE ? \
+                                        ORDER BY m.price ASC",
+    ["%" + search + "%"]
+  );
+  await conn.release();
+  res.json({ menus: results });
 });
 
 app.listen(port, () => {
-    console.log('start! express server');
-})
+  console.log("start! express server");
+});
