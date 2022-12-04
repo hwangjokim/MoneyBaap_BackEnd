@@ -12,37 +12,32 @@ const pool = mysql.createPool({
 });
 
 const app = express();
+app.use(cors());
 const port = 5921;
 
-var cors = require("cors");
-app.use(cors());
+app.get('/places/:school', async (req, res) => {
+    let school = req.params.school;
+    const conn = await pool.getConnection();
+    let [results] = await conn.query("SELECT name, link, addr, star, distance FROM place WHERE school = ? ORDER BY distance ASC, star DESC",[school]);
+    await conn.release();
+    res.json({places: results});
+})
 
-app.get("/places", async (req, res) => {
-  const conn = await pool.getConnection();
-  let [results] = await conn.query(
-    "SELECT name, link, addr, star FROM place WHERE 1"
-  );
-  await conn.release();
-  res.json({ places: results });
-});
-
-app.get("/lowPrice", async (req, res) => {
-  const { search } = req.query;
-  console.log("search ! => " + search);
-  const conn = await pool.getConnection();
-  let [results] = await conn.query(
-    "SELECT p.name As placeName, p.link, p.addr, p.star, m.name, m.price, m.imgUrl \
+app.get('/lowPrice/:school', async (req, res) => {
+    let school = req.params.school;
+    const { search } = req.query;
+    const conn = await pool.getConnection();
+    let [results] = await conn.query("SELECT p.name As placeName, p.link, p.addr, p.star, p.distance, m.name, m.price, m.imgUrl \
                                         FROM place p \
                                         JOIN menu m \
                                             ON p.idx = m.placeIdx \
                                         WHERE m.name LIKE ? \
-                                        ORDER BY m.price ASC",
-    ["%" + search + "%"]
-  );
-  await conn.release();
-  res.json({ menus: results });
-});
+                                        AND p.school = ? \
+                                        ORDER BY m.price ASC, p.distance ASC", ["%" + search + "%", school]);
+    await conn.release();
+    res.json({menus: results});
+})
 
 app.listen(port, () => {
-  console.log("start! express server");
-});
+    console.log('start! express server');
+})
